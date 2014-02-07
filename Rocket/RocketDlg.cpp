@@ -23,7 +23,7 @@ CRocketDlg::CRocketDlg(CWnd* pParent /*=NULL*/)
 	minAngleValue = -90;
 
 	context = new Context();
-	dContext = new DrawingContext();
+	dContext = new DrawingContext(context->getObjCriticalSection());
 
 	rockets = new std::vector<Rocket*>();
 }
@@ -75,15 +75,6 @@ BOOL CRocketDlg::OnInitDialog()
 		EndDialog(res);
 	}
 
-
-	for (int i = 0; i < rockets->size(); ++i)
-	{
-		dContext->addObject(rockets->at(i));
-		context->addObject(rockets->at(i));
-	}
-
-	context->setDrawingContext(dContext);
-
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -133,7 +124,9 @@ void CRocketDlg::OnBnClickedStart()
 	try
 	{
 		context->start();
-	} catch (const ContextException& exc)
+		dContext->unmakeCurrent();
+		dContext->startRedrawingThread();
+	} catch (const std::exception& exc)
 	{
 		MessageBoxA(::GetActiveWindow(), exc.what(), "Error", MB_ICONERROR | MB_OK);
 		EndDialog(-1);
@@ -151,6 +144,7 @@ void CRocketDlg::OnBnClickedStart()
 void CRocketDlg::OnBnClickedStop()
 {
 	context->stop();
+	dContext->stopRedrawingThread();
 
 	startButton->EnableWindow(TRUE);
 	stopButton->EnableWindow(FALSE);
@@ -163,7 +157,14 @@ void CRocketDlg::OnBnClickedAdd()
 	rockets->push_back(r);
 
 	dContext->addObject(r);
-	context->addObject(r);
+	r->setLimitCoords(0, 0, dContext->getWidth(), dContext->getHeight());
+	int res = context->addObject(r);
+
+	if (res)
+	{
+		MessageBox(_T("Cannot add object to context"), _T("Error"), MB_ICONERROR | MB_OK);
+		EndDialog(res);
+	}
 	
 	r->setAngle((INT16)spin->GetPos());
 	

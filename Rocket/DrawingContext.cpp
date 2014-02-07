@@ -54,8 +54,71 @@ int DrawingContext::Texture::initFromFile(std::string filename)
 	return 0;
 }
 
+unsigned int DrawingContext::threadFunction(void *p)
+{
+	DrawingContext *dc = reinterpret_cast<DrawingContext*>(p);
+
+	bool flag = false;
+	{
+		Lock l(dc->cs);
+		flag = dc->isStart;
+	}
+
+	dc->makeCurrent();
+	
+	while (flag)
+	{
+		
+		dc->redrawScene();
+
+		Sleep(dc->redrawInterval);
+
+		{
+			Lock l(dc->cs);
+			flag = dc->isStart;
+		}
+	}
+
+	dc->unmakeCurrent();
+
+	return 0;
+}
+
+void DrawingContext::startRedrawingThread()
+{
+	if (!isStart)
+	{
+		isStart = true;
+		
+		threadHandle = (HANDLE)_beginthreadex(0, 0, threadFunction, reinterpret_cast<void*>(this), 0, NULL);
+
+		if (!threadHandle) throw DrawingContextException("Cannot create drawing thread");
+
+	}
+}
+
+void DrawingContext::stopRedrawingThread()
+{
+	if (isStart)
+	{
+		{
+			Lock l(cs);
+			isStart = false;
+		}
+
+		if (threadHandle)
+		{
+			WaitForSingleObject(threadHandle, INFINITE);
+			threadHandle = NULL;
+		}
+	}
+}
+
+
 int DrawingContext::init(CStatic *elem)
 {
+	Lock l(cs);
+
 	if (!elem) return -1;
 
 	deviceContext = elem->GetDC()->m_hDC;
@@ -190,25 +253,30 @@ int DrawingContext::loadRectTexture(std::string filename)
 	} else return -1;
 }
 
-void DrawingContext::addObject(GL_Object* obj)
+void DrawingContext::addObject(GL_DiskObj* obj)
 {
 	if (obj)
 	{
-		objPool->push_back(obj);
-		obj->setDrawingContext(this);
+		Lock l(cs);
+		diskObjPool->push_back(obj);
 	}
 }
 
 void DrawingContext::redrawScene()
 {
-	int size = objPool->size();
-
 	initScene();
 
-	for (int i = 0; i < size; ++i)
 	{
-		GL_Object *obj = objPool->at(i);
-		if (obj->isInitObj()) obj->draw();
+		Lock l(cs);
+
+		int size = diskObjPool->size();
+		
+		Lock objL(objCs);
+		for (int i = 0; i < size; ++i)
+		{
+			GL_DiskObj *obj = diskObjPool->at(i);
+			drawDisk(obj->getX(), obj->getY(), obj->getR());
+		}
 	}
 	
 	refreshScreen();
@@ -216,7 +284,15 @@ void DrawingContext::redrawScene()
 
 DrawingContext::~DrawingContext()
 {
-	delete objPool; 
+	stopRedrawingThread();
+	
+	if (threadHandle)
+	{
+		WaitForSingleObject(threadHandle, INFINITE);
+		CloseHandle(threadHandle);
+	}
+
+	delete diskObjPool; 
 	
 	if (renderContext) 
 		wglDeleteContext(renderContext);

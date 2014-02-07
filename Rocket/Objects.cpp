@@ -9,7 +9,7 @@ void Rocket::setContext(ContextInterface *_context)
 {
 	if (_context) 
 		context = _context; 
-	else throw IncorrectArgException("context is NULL");
+	else throw IncorrectDataException("context is NULL");
 }
 
 void Rocket::start()
@@ -27,21 +27,14 @@ void Rocket::setVelComponents(float angle, float velocity)
 	velX = velocity * std::sinf(PI*angle/180);
 }
 
-void Rocket::setDrawingContext(DrawingContextInterface *_dContext)
-{
-	if (_dContext) 
-		dContext = _dContext; 
-	else throw IncorrectArgException("dContext is NULL");
-}
-
 void Rocket::wakeup()
 {
-	if (!dContext) throw NullPointerException();
+	float width = maxX - minX;
+	float heigth = maxY - minY;
 
-	cHeight = dContext->getHeight();
-	cWidth = dContext->getWidth();
+	if (width <= 0 || heigth <= 0) throw IncorrectDataException("Incorrect coords limits");
 
-	x = cWidth / 2.0f;
+	x = width / 2.0f;
 	y = (GLfloat)r;
 
 	velocity = r;
@@ -50,11 +43,6 @@ void Rocket::wakeup()
 
 	isInit= true;
 	updateTime = 20;
-}
-
-void Rocket::draw()
-{
-	dContext->drawDisk(x,y,r);
 }
 
 void Rocket::recieveEvent(const Event* e)
@@ -68,17 +56,15 @@ void Rocket::recieveEvent(const Event* e)
 		x += velX;
 
 	
-		if (x <= r || x >= cWidth - r)
+		if (x <= minX + r || x >= maxX - r)
 		{
 			velX = -velX;
 		}
 
-		if (y <= r || y >= cHeight -r)
+		if (y <= minY + r || y >= maxY -r)
 		{
 			velY = - velY;
 		}
-
-		dContext->redrawScene();
 		
 		sendEvent(1, getId(), updateTime);
 

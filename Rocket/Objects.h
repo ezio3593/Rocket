@@ -53,7 +53,7 @@ class ContextInterface
 {
 public:
 	virtual void addEventFromObj(int label, id source, id dest, LONG64 timeDiff) = 0;
-	virtual CriticalSection& getCriticalSection() = 0;
+	virtual CriticalSection& getObjCriticalSection() = 0;
 };
 
 class DrawingContextInterface
@@ -68,6 +68,7 @@ public:
 	virtual void refreshScreen() = 0;
 	virtual void makeCurrent() = 0;
 	virtual void unmakeCurrent() = 0;
+	virtual ~DrawingContextInterface() {}
 };
 
 class Event
@@ -107,30 +108,33 @@ public:
 	virtual void stop() = 0;
 };
 
-class GL_Object
+class GL_DiskObj
 {
 public:
-	virtual void draw() = 0;
-	virtual void setDrawingContext(DrawingContextInterface *_dContext) = 0;
+	virtual float getX() = 0;
+	virtual float getY() = 0;
+	virtual float getR() = 0;
 	virtual bool isInitObj() = 0; 
 };
 
-class Rocket: public KR_Object, public GL_Object
+class Rocket: public KR_Object, public GL_DiskObj
 {
 	const float PI;
 
-	GLfloat x;
-	GLfloat y;
+	float x;
+	float y;
 	float velocity;
 	float angle;
 	float velX;
 	float velY;
 	int updateTime;
 
-	GLdouble r;
+	float r;
 	
-	int cHeight;
-	int cWidth;
+	float minX;
+	float minY;
+	float maxX;
+	float maxY;
 
 	bool isInit;
 	bool isStart;
@@ -140,29 +144,32 @@ class Rocket: public KR_Object, public GL_Object
 
 	void sendEvent(int label, id dest, LONG64 timeDiff) { 
 		if (isStart) context->addEventFromObj(label, getId(), dest, timeDiff); }
-
 	void setVelComponents(float angle, float velocity);
 public:
-	Rocket(GLdouble _r = 5.0): r(_r), isStart(false), isInit(false), angle(45.0f), PI(3.14159265359f) {}
+	Rocket(float _r = 5.0): r(_r), isStart(false), isInit(false), angle(45.0f), PI(3.14159265359f) {}
 	id getId() { return this; }
 	void wakeup();
 	void start();
 	void stop() { isStart = false; }
 	void recieveEvent(const Event *e);
 	void setContext(ContextInterface *_context);
-	void setDrawingContext(DrawingContextInterface *_dContext);
 	void setAngle(float _angle) { angle = _angle; setVelComponents(angle, velocity); }
+	void setLimitCoords(float _minX, float _minY, float _maxX, float _maxY) { minX=_minX; minY=_minY; maxX=_maxX; maxY=_maxY; }
+
+	float getX() { return x; }
+	float getY() { return y; }
+	float getR() { return r; }
+
 	float getAngle() { return angle; }
-	void draw();
 	bool isInitObj() { return isInit; }
 	~Rocket() {}
 };
 
-class IncorrectArgException: public std::exception
+class IncorrectDataException: public std::exception
 {
 	public:
-		IncorrectArgException() : exception() {}
-		IncorrectArgException(const char* const& msg) : exception(msg) {}
+		IncorrectDataException() : exception() {}
+		IncorrectDataException(const char* const& msg) : exception(msg) {}
 };
 
 class NullPointerException: public std::exception

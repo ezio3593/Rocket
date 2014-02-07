@@ -32,11 +32,11 @@ class Context: public ContextInterface
 
 	EventPool *eventPool;
 	ObjectPool *objPool;
-	DrawingContextInterface* dContext;
 	Timer timer;
 
 	CriticalSection cs;
 	CriticalSection objPoolCs;
+	CriticalSection objCs;
 
 	bool isStart;
 
@@ -52,8 +52,7 @@ public:
 	int addObject(KR_Object* obj);
 	int deleteObjectById(id objId);
 	void addEventFromObj(int label, id source, id dest, LONG64 timeDiff);
-	CriticalSection& getCriticalSection() { return cs; }
-	int setDrawingContext(DrawingContextInterface* _dContext);
+	CriticalSection& getObjCriticalSection() { return cs; }
 	bool isStarted() { return isStart; }
 	void start();
 	void stop();

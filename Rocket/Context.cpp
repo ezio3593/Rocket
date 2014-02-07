@@ -21,12 +21,7 @@ unsigned int Context::threadProcess(void *p)
 {
 	Context* c = reinterpret_cast<Context*>(p);
 	
-	if (c->dContext)
-	{
-		c->dContext->makeCurrent();
-		c->processEvents();
-		c->dContext->unmakeCurrent();
-	} else c->processEvents();
+	c->processEvents();
 
 	return 0;
 }
@@ -37,7 +32,6 @@ Context::Context()
 	eventPool = new EventPool();
 
 	isStart = false;
-	dContext = NULL;
 	threadHandle = NULL;
 }
 
@@ -51,7 +45,13 @@ int Context::addObject(KR_Object* obj)
 		if (!obj->isInitObj()) 
 		{
 			obj->setContext(this);
-			obj->wakeup();
+			try
+			{
+				obj->wakeup();
+			} catch (const IncorrectDataException&)
+			{
+				return -1;
+			}
 		}
 		return 0;
 	} else return -1;
@@ -59,7 +59,7 @@ int Context::addObject(KR_Object* obj)
 
 int Context::deleteObjectById(id objId)
 {
-	Lock l(cs);
+	Lock l(objPoolCs);
 	
 	KR_Object* obj = (*objPool)[objId];
 	if (obj) 
@@ -96,20 +96,20 @@ void Context::processEvents()
 
 				if (timer.getTimeFromStart() >= e->getTimestamp())
 				{
-
-					dContext->redrawScene();
-
 					id idNum = e->getDestId();
 					
 					KR_Object* obj = NULL;
 
 					{
-						Lock objL(objPoolCs);
+						Lock objPoolL(objPoolCs);
 						obj = (*objPool)[idNum];
 					}
-				
-					obj->recieveEvent(e);
 					
+					{
+						Lock objL(objCs);
+						obj->recieveEvent(e);
+					}
+
 					delete e;
 					eventPool->pop();
 
@@ -151,13 +151,8 @@ void Context::start()
 		if (!timer.isSupportPerf()) throw ContextException("Perfomance counter isn't supported");
 
 		timer.start();
-
-		if (dContext)
-		{
-			dContext->unmakeCurrent();
-			threadHandle = (HANDLE)_beginthreadex(0, 0, threadProcess, reinterpret_cast<void*>(this), 0, NULL);
-		} else
-			threadHandle = (HANDLE)_beginthreadex(0, 0, threadProcess, reinterpret_cast<void*>(this), 0, NULL);
+		
+		threadHandle = (HANDLE)_beginthreadex(0, 0, threadProcess, reinterpret_cast<void*>(this), 0, NULL);
 
 		if (!threadHandle) throw ContextException("Cannot create thread");
 	}
@@ -188,15 +183,6 @@ void Context::stop()
 			eventPool->pop();
 		}
 	}
-}
-
-int Context::setDrawingContext(DrawingContextInterface* _dContext)
-{
-	if (!isStart)
-	{
-		dContext = _dContext;
-		return 0;
-	} else return -1;
 }
 
 Context::~Context()
