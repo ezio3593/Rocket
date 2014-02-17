@@ -9,9 +9,9 @@
 class CRocketDlg : public CDialog
 {
 	DrawingContext *dContext;
-	Context *context;
+	Context* context;
 
-	std::vector<Rocket*>* rockets;
+	std::vector<Rocket*> rockets;
 
 	CClientDC* devc;
 

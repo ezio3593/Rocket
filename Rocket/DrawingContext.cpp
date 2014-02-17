@@ -258,7 +258,7 @@ void DrawingContext::addObject(GL_DiskObj* obj)
 	if (obj)
 	{
 		Lock l(cs);
-		diskObjPool->push_back(obj);
+		diskObjPool.push_back(obj);
 	}
 }
 
@@ -269,12 +269,12 @@ void DrawingContext::redrawScene()
 	{
 		Lock l(cs);
 
-		int size = diskObjPool->size();
+		int size = diskObjPool.size();
 		
 		Lock objL(objCs);
 		for (int i = 0; i < size; ++i)
 		{
-			GL_DiskObj *obj = diskObjPool->at(i);
+			GL_DiskObj *obj = diskObjPool[i];
 			drawDisk(obj->getX(), obj->getY(), obj->getR());
 		}
 	}
@@ -292,7 +292,6 @@ DrawingContext::~DrawingContext()
 		CloseHandle(threadHandle);
 	}
 
-	delete diskObjPool; 
 	
 	if (renderContext) 
 		wglDeleteContext(renderContext);

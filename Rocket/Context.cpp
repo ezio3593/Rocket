@@ -28,9 +28,6 @@ unsigned int Context::threadProcess(void *p)
 
 Context::Context()
 {
-	objPool = new ObjectPool();
-	eventPool = new EventPool();
-
 	isStart = false;
 	threadHandle = NULL;
 }
@@ -39,9 +36,9 @@ int Context::addObject(KR_Object* obj)
 {
 	Lock l(objPoolCs);
 
-	if (obj && objPool->find(obj->getId()) == objPool->end())
+	if (obj && objPool.find(obj->getId()) == objPool.end())
 	{
-		objPool->insert(std::pair<id, KR_Object*>(obj->getId(), obj));
+		objPool.insert(std::pair<id, KR_Object*>(obj->getId(), obj));
 		if (!obj->isInitObj()) 
 		{
 			obj->setContext(this);
@@ -61,10 +58,10 @@ int Context::deleteObjectById(id objId)
 {
 	Lock l(objPoolCs);
 	
-	KR_Object* obj = (*objPool)[objId];
+	KR_Object* obj = objPool[objId];
 	if (obj) 
 	{
-		objPool->erase(objId);
+		objPool.erase(objId);
 		return 0;
 	} else return -1;
 }
@@ -90,9 +87,9 @@ void Context::processEvents()
 		{
 			Lock l(cs);
 
-			if (eventPool->size())
+			if (eventPool.size())
 			{
-				e = eventPool->top();
+				e = eventPool.top();
 
 				if (timer.getTimeFromStart() >= e->getTimestamp())
 				{
@@ -102,7 +99,7 @@ void Context::processEvents()
 
 					{
 						Lock objPoolL(objPoolCs);
-						obj = (*objPool)[idNum];
+						obj = objPool[idNum];
 					}
 					
 					{
@@ -111,7 +108,7 @@ void Context::processEvents()
 					}
 
 					delete e;
-					eventPool->pop();
+					eventPool.pop();
 
 				}
 			}
@@ -128,7 +125,7 @@ int Context::addEvent(Event* e)
 {
 	if (e)
 	{
-		eventPool->push(e);
+		eventPool.push(e);
 		return 0;
 	} else return -1;
 }
@@ -167,7 +164,7 @@ void Context::stop()
 			
 			isStart = false;
 
-			for (ObjectPool::iterator i = objPool->begin(); i != objPool->end(); ++i)
+			for (ObjectPool::iterator i = objPool.begin(); i != objPool.end(); ++i)
 				i->second->stop();
 		}
 
@@ -177,10 +174,10 @@ void Context::stop()
 			threadHandle = NULL;
 		}
 
-		while (eventPool->size())
+		while (eventPool.size())
 		{
-			delete eventPool->top();
-			eventPool->pop();
+			delete eventPool.top();
+			eventPool.pop();
 		}
 	}
 }
@@ -195,13 +192,9 @@ Context::~Context()
 		CloseHandle(threadHandle);
 	}
 
-	delete objPool;
-
-	while (eventPool->size())
+	while (eventPool.size())
 	{
-		delete eventPool->top();
-		eventPool->pop();
+		delete eventPool.top();
+		eventPool.pop();
 	}
-
-	delete eventPool;
 }

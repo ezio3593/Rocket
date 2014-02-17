@@ -37,7 +37,7 @@ class DrawingContext: public DrawingContextInterface
 	HGLRC renderContext;
 
 	CStatic* drawElem;
-	std::vector<GL_DiskObj*> *diskObjPool;
+	std::vector<GL_DiskObj*> diskObjPool;
 
 	CriticalSection cs;
 	CriticalSection &objCs;
@@ -55,8 +55,7 @@ class DrawingContext: public DrawingContextInterface
 	void setPixelFormat();
 
 public:
-	DrawingContext(CriticalSection &_objCs): isStart(false), threadHandle(NULL), redrawInterval(20), objCs(_objCs)
-		{ diskObjPool = new std::vector<GL_DiskObj*>(); }
+	DrawingContext(CriticalSection &_objCs): isStart(false), threadHandle(NULL), redrawInterval(20), objCs(_objCs) {}
 	LONG getHeight() { return height; } 
 	LONG getWidth() { return width; }
 	int  init(CStatic *pc);

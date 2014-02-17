@@ -30,8 +30,8 @@ class Context: public ContextInterface
 	typedef std::priority_queue<Event*, std::vector<Event*>, EventComparator> EventPool;
 	typedef std::map<id, KR_Object*> ObjectPool;
 
-	EventPool *eventPool;
-	ObjectPool *objPool;
+	EventPool eventPool;
+	ObjectPool objPool;
 	Timer timer;
 
 	CriticalSection cs;

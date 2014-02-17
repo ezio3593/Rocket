@@ -5,19 +5,12 @@
 GL_Color GL_Color::white(1.0f, 1.0f, 1.0f, 0.0f);
 GL_Color GL_Color::black(0.0f, 0.0f, 0.0f, 0.0f);
 
-void Rocket::setContext(ContextInterface *_context)
-{
-	if (_context) 
-		context = _context; 
-	else throw IncorrectDataException("context is NULL");
-}
-
 void Rocket::start()
 {
 	if (!isStart)
 	{
 		isStart = true;
-		sendEvent(1, getId(), updateTime);
+		sendEvent(MOVE, getId(), updateTime);
 	}
 }
 
@@ -51,7 +44,7 @@ void Rocket::recieveEvent(const Event* e)
 
 	switch(label)
 	{
-	case 1:
+	case MOVE:
 		y += velY;
 		x += velX;
 
@@ -66,7 +59,7 @@ void Rocket::recieveEvent(const Event* e)
 			velY = - velY;
 		}
 		
-		sendEvent(1, getId(), updateTime);
+		sendEvent(MOVE, getId(), updateTime);
 
 		break;
 	}

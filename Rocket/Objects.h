@@ -99,12 +99,20 @@ public:
 
 class KR_Object
 {
+
+	ContextInterface *context;
+
+protected:
+	void sendEvent(int label, id dest, LONG64 timeDiff) { 
+		if (context) context->addEventFromObj(label, getId(), dest, timeDiff); }
+
 public:
+
 	virtual void wakeup() = 0;
 	virtual bool isInitObj() = 0;
 	virtual void recieveEvent(const Event* e) = 0;
 	virtual id getId() = 0;
-	virtual void setContext(ContextInterface *_context) = 0;
+	void setContext(ContextInterface *_context) { context = _context; }
 	virtual void stop() = 0;
 };
 
@@ -119,6 +127,12 @@ public:
 
 class Rocket: public KR_Object, public GL_DiskObj
 {
+
+	enum eventLabel
+	{
+		MOVE
+	};
+
 	const float PI;
 
 	float x;
@@ -139,11 +153,6 @@ class Rocket: public KR_Object, public GL_DiskObj
 	bool isInit;
 	bool isStart;
 
-	ContextInterface *context;
-	DrawingContextInterface *dContext;
-
-	void sendEvent(int label, id dest, LONG64 timeDiff) { 
-		if (isStart) context->addEventFromObj(label, getId(), dest, timeDiff); }
 	void setVelComponents(float angle, float velocity);
 public:
 	Rocket(float _r = 5.0): r(_r), isStart(false), isInit(false), angle(45.0f), PI(3.14159265359f) {}

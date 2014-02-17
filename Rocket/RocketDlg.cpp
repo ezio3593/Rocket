@@ -24,8 +24,6 @@ CRocketDlg::CRocketDlg(CWnd* pParent /*=NULL*/)
 
 	context = new Context();
 	dContext = new DrawingContext(context->getObjCriticalSection());
-
-	rockets = new std::vector<Rocket*>();
 }
 
 void CRocketDlg::DoDataExchange(CDataExchange* pDX)
@@ -132,9 +130,9 @@ void CRocketDlg::OnBnClickedStart()
 		EndDialog(-1);
 	}
 
-	for (int i = 0; i < rockets->size(); ++i)
+	for (int i = 0; i < rockets.size(); ++i)
 	{
-		rockets->at(i)->start();
+		rockets[i]->start();
 	}
 
 	startButton->EnableWindow(FALSE);
@@ -154,7 +152,7 @@ void CRocketDlg::OnBnClickedStop()
 void CRocketDlg::OnBnClickedAdd()
 {
 	Rocket* r = new Rocket();
-	rockets->push_back(r);
+	rockets.push_back(r);
 
 	dContext->addObject(r);
 	r->setLimitCoords(0, 0, dContext->getWidth(), dContext->getHeight());
@@ -178,10 +176,8 @@ CRocketDlg::~CRocketDlg()
 	delete context;
 	delete dContext;
 
-	for (int i = 0; i < rockets->size(); ++i)
+	for (int i = 0; i < rockets.size(); ++i)
 	{
-		delete rockets->at(i);
+		delete rockets[i];
 	}
-
-	delete rockets;
 }
