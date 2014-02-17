@@ -68,8 +68,6 @@ int Context::deleteObjectById(id objId)
 
 void Context::processEvents()
 {
-	int k = 0;
-
 	bool flag;
 
 	{
