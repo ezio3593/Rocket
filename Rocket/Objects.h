@@ -110,7 +110,7 @@ public:
 
 	virtual void wakeup() = 0;
 	virtual bool isInitObj() = 0;
-	virtual void recieveEvent(const Event* e) = 0;
+	virtual void recieveEvent(const Event& e) = 0;
 	virtual id getId() = 0;
 	void setContext(ContextInterface *_context) { context = _context; }
 	virtual void stop() = 0;
@@ -160,8 +160,7 @@ public:
 	void wakeup();
 	void start();
 	void stop() { isStart = false; }
-	void recieveEvent(const Event *e);
-	void setContext(ContextInterface *_context);
+	void recieveEvent(const Event& e);
 	void setAngle(float _angle) { angle = _angle; setVelComponents(angle, velocity); }
 	void setLimitCoords(float _minX, float _minY, float _maxX, float _maxY) { minX=_minX; minY=_minY; maxX=_maxX; maxY=_maxY; }
 

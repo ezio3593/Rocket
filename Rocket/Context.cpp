@@ -68,8 +68,6 @@ int Context::deleteObjectById(id objId)
 
 void Context::processEvents()
 {
-	Event* e = NULL;
-
 	int k = 0;
 
 	bool flag;
@@ -89,11 +87,11 @@ void Context::processEvents()
 
 			if (eventPool.size())
 			{
-				e = eventPool.top();
+				Event e = eventPool.top();
 
-				if (timer.getTimeFromStart() >= e->getTimestamp())
+				if (timer.getTimeFromStart() >= e.getTimestamp())
 				{
-					id idNum = e->getDestId();
+					id idNum = e.getDestId();
 					
 					KR_Object* obj = NULL;
 
@@ -107,7 +105,6 @@ void Context::processEvents()
 						obj->recieveEvent(e);
 					}
 
-					delete e;
 					eventPool.pop();
 
 				}
@@ -121,13 +118,10 @@ void Context::processEvents()
 	}
 }
 
-int Context::addEvent(Event* e)
+int Context::addEvent(Event& e)
 {
-	if (e)
-	{
-		eventPool.push(e);
-		return 0;
-	} else return -1;
+	eventPool.push(e);
+	return 0;
 }
 
 void Context::addEventFromObj(int label, id source, id dest, LONG64 timeDiff)
@@ -135,7 +129,7 @@ void Context::addEventFromObj(int label, id source, id dest, LONG64 timeDiff)
 	Lock l(cs);
 
 	time_t t = timer.getTimeFromStart();
-	addEvent(new Event(label, source, dest, t, t + timeDiff));
+	addEvent(Event(label, source, dest, t, t + timeDiff));
 }
 
 void Context::start()
@@ -176,7 +170,6 @@ void Context::stop()
 
 		while (eventPool.size())
 		{
-			delete eventPool.top();
 			eventPool.pop();
 		}
 	}
@@ -194,7 +187,6 @@ Context::~Context()
 
 	while (eventPool.size())
 	{
-		delete eventPool.top();
 		eventPool.pop();
 	}
 }

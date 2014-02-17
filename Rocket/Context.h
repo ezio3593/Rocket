@@ -27,7 +27,7 @@ class ContextException: public std::exception
 
 class Context: public ContextInterface
 {
-	typedef std::priority_queue<Event*, std::vector<Event*>, EventComparator> EventPool;
+	typedef std::priority_queue<Event, std::vector<Event>, EventComparator> EventPool;
 	typedef std::map<id, KR_Object*> ObjectPool;
 
 	EventPool eventPool;
@@ -42,7 +42,7 @@ class Context: public ContextInterface
 
 	HANDLE threadHandle;
 	
-	int addEvent(Event* e);
+	int addEvent(Event& e);
 	void processEvents();
 
 	static unsigned int __stdcall threadProcess(void *p);

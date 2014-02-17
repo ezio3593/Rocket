@@ -38,9 +38,9 @@ void Rocket::wakeup()
 	updateTime = 20;
 }
 
-void Rocket::recieveEvent(const Event* e)
+void Rocket::recieveEvent(const Event& e)
 {
-	int label = e->getLabel();
+	int label = e.getLabel();
 
 	switch(label)
 	{
